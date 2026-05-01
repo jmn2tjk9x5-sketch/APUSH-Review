@@ -1,0 +1,8 @@
+.DS_Store
+Thumbs.db
+
+# Local editor files
+.vscode/
+
+# Python/http server noise
+__pycache__/

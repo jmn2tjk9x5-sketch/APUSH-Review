@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APUSH Full Review</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="utility-bar">
+      <div class="utility-block">
+        <div class="utility-title">APUSH Full Review</div>
+        <div class="utility-subtitle">Supabase-ready study platform with AMSCO tracking</div>
+      </div>
+      <div class="utility-block utility-block-right">
+        <div class="sync-status-row">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-status">Local mode</span>
+        </div>
+        <form id="auth-form" class="auth-form">
+          <input id="auth-email" type="email" placeholder="Email for magic link">
+          <button type="submit" class="auth-button">Sign In</button>
+        </form>
+        <div class="auth-meta-row">
+          <span id="auth-user-label">Not signed in</span>
+          <button id="sign-out-button" class="ghost-button hidden" type="button">Sign Out</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="top-nav">
+      <div class="nav-brand">APUSH <span>Full Review</span></div>
+      <div class="nav-tab active-people" id="tab-people" data-tab="people">PEOPLE</div>
+      <div class="nav-tab" id="tab-events" data-tab="events">EVENTS</div>
+      <div class="nav-tab" id="tab-quizizz" data-tab="quizizz">QUIZIZZ</div>
+      <div class="nav-tab" id="tab-master-timeline" data-tab="master-timeline">TIMELINE</div>
+      <div class="nav-tab" id="tab-progress" data-tab="progress">PROGRESS</div>
+    </nav>
+
+    <div class="page active" id="page-people">
+      <div class="people-header">
+        <div class="page-title">APUSH <span>People</span></div>
+        <div class="subtitle">// COMPLETE REFERENCE — EVERY FIGURE IN U.S. HISTORY</div>
+        <div class="controls">
+          <input id="search" type="text" placeholder="Search name or keyword...">
+          <div class="era-filters" id="era-filters"></div>
+          <span id="count"></span>
+        </div>
+      </div>
+      <main id="main"></main>
+    </div>
+
+    <div class="page" id="page-events">
+      <div class="events-header">
+        <div class="events-title">APUSH <span>Events</span></div>
+        <div class="subtitle">// KEY EVENTS, LEGISLATION & TURNING POINTS IN U.S. HISTORY</div>
+        <div class="events-controls">
+          <input id="event-search" type="text" placeholder="Search event or keyword...">
+          <div class="type-filters" id="type-filters"></div>
+          <span id="event-count"></span>
+        </div>
+      </div>
+      <div class="events-main" id="events-main"></div>
+    </div>
+
+    <div class="page" id="page-quizizz">
+      <div class="events-header">
+        <div class="events-title">APUSH <span>Quizizz</span></div>
+        <div class="subtitle">// FRONTEND PRACTICE — CHRONOLOGY, LEADERS, ACTS & EFFECTS</div>
+        <div class="events-controls">
+          <select id="quizizz-mode">
+            <option value="mixed">MIXED</option>
+            <option value="timeline">TIMELINE DRAG</option>
+            <option value="chronology">CHRONOLOGY</option>
+            <option value="leaders">LEADERS</option>
+            <option value="causes">ACTS / CAUSES</option>
+            <option value="identify">IDENTIFY</option>
+          </select>
+          <select id="quizizz-era">
+            <option value="Colonial">COLONIAL</option>
+            <option value="Revolution">REVOLUTION</option>
+            <option value="Early Republic">EARLY REPUBLIC</option>
+            <option value="Antebellum">ANTEBELLUM</option>
+            <option value="Civil War">CIVIL WAR</option>
+            <option value="Reconstruction">RECONSTRUCTION</option>
+            <option value="Gilded Age">GILDED AGE</option>
+            <option value="Progressive Era">PROGRESSIVE ERA</option>
+            <option value="WWI">WWI</option>
+            <option value="1920s">1920S</option>
+            <option value="New Deal">NEW DEAL</option>
+            <option value="WWII">WWII</option>
+            <option value="Cold War">COLD WAR</option>
+            <option value="Vietnam">VIETNAM</option>
+            <option value="Modern">MODERN</option>
+          </select>
+          <button class="type-btn active" id="quizizz-new">NEW QUESTION</button>
+          <span id="quizizz-score"></span>
+        </div>
+      </div>
+      <div class="events-main" id="quizizz-main"></div>
+    </div>
+
+    <div class="page" id="page-master-timeline">
+      <div class="master-header">
+        <div class="master-title">APUSH <span>Master Timeline</span></div>
+        <div class="subtitle">// ONE SCROLLABLE CHRONOLOGY — PEOPLE, EVENTS, ERAS & BIG CONCEPTS</div>
+        <div class="master-controls">
+          <input id="master-search" type="text" placeholder="Search timeline...">
+          <select id="master-era">
+            <option value="ALL">ALL ERAS</option>
+          </select>
+          <span id="master-count"></span>
+        </div>
+      </div>
+      <div class="master-main">
+        <div class="master-scroll" id="master-timeline-main"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-progress">
+      <div class="master-header">
+        <div class="master-title">AMSCO <span>Progress</span></div>
+        <div class="subtitle">// PERIOD MASTERY, RECENT ATTEMPTS, WEAK SPOTS</div>
+        <div class="master-controls">
+          <span class="progress-summary-pill" id="progress-overview">No attempts yet</span>
+        </div>
+      </div>
+      <div class="progress-main">
+        <section class="progress-grid">
+          <article class="progress-panel">
+            <h3>Period Mastery</h3>
+            <div id="period-progress-list" class="period-progress-list"></div>
+          </article>
+          <article class="progress-panel">
+            <h3>Question Types</h3>
+            <div id="mode-progress-list" class="period-progress-list"></div>
+          </article>
+        </section>
+        <section class="progress-panel">
+          <h3>Recent Attempts</h3>
+          <div id="recent-attempts-list" class="recent-attempts-list"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="./supabase-config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
