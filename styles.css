@@ -534,6 +534,10 @@
       linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03)),
       var(--tag-bg);
     border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .flashcard-card:hover {
+    border-color: var(--events-accent2);
   }
   .flashcard-topline {
     display: flex;

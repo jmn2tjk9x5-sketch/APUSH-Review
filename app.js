@@ -545,13 +545,18 @@ function renderFlashcardsPage() {
 
   const item = currentFlashcardItem();
   if (!item) {
-    stageEl.innerHTML = `<div class="flashcard-empty">// NO CARDS IN THIS DECK YET</div>`;
+    const emptyText = flashcardState.deck === "review"
+      ? "// NO CARDS MARKED FOR REVIEW YET"
+      : flashcardState.deck === "known"
+        ? "// NO CARDS MARKED KNOWN YET"
+        : "// NO CARDS IN THIS DECK YET";
+    stageEl.innerHTML = `<div class="flashcard-empty">${emptyText}</div>`;
     return;
   }
 
   const marks = getFlashcardMarks(item.key);
   stageEl.innerHTML = `
-    <div class="flashcard-card">
+    <div class="flashcard-card" id="flashcard-card">
       <div class="flashcard-topline">
         <span class="flashcard-type">${item.type} · ${item.era}</span>
         <span class="flashcard-position">${flashcardState.index + 1} OF ${deckItems.length}</span>
@@ -590,7 +595,13 @@ function renderFlashcardsPage() {
     </div>
   `;
 
-  document.getElementById("mark-review-button").addEventListener("click", () => {
+  document.getElementById("flashcard-card").addEventListener("click", () => {
+    flashcardState.flipped = !flashcardState.flipped;
+    renderFlashcardsPage();
+  });
+
+  document.getElementById("mark-review-button").addEventListener("click", (event) => {
+    event.stopPropagation();
     const nextReview = !getFlashcardMarks(item.key).review;
     setFlashcardMarks(item.key, { review: nextReview, known: nextReview ? false : getFlashcardMarks(item.key).known });
     recordStudyAttempt({
@@ -605,7 +616,8 @@ function renderFlashcardsPage() {
     renderFlashcardsPage();
   });
 
-  document.getElementById("mark-known-button").addEventListener("click", () => {
+  document.getElementById("mark-known-button").addEventListener("click", (event) => {
+    event.stopPropagation();
     const nextKnown = !getFlashcardMarks(item.key).known;
     setFlashcardMarks(item.key, { known: nextKnown, review: nextKnown ? false : getFlashcardMarks(item.key).review });
     recordStudyAttempt({
@@ -620,7 +632,8 @@ function renderFlashcardsPage() {
     renderFlashcardsPage();
   });
 
-  document.getElementById("clear-marks-button").addEventListener("click", () => {
+  document.getElementById("clear-marks-button").addEventListener("click", (event) => {
+    event.stopPropagation();
     setFlashcardMarks(item.key, { review: false, known: false });
     renderFlashcardsPage();
   });
@@ -1120,6 +1133,7 @@ function buildMasterTimelineApp() {
 
 function buildFlashcardsApp() {
   const deckEl = document.getElementById("flashcard-deck");
+  const reviewDeckButton = document.getElementById("flashcard-review-deck");
   const flipButton = document.getElementById("flashcard-flip");
   const nextButton = document.getElementById("flashcard-next");
   const shuffleButton = document.getElementById("flashcard-shuffle");
@@ -1135,6 +1149,15 @@ function buildFlashcardsApp() {
 
   deckEl.addEventListener("change", () => {
     flashcardState.deck = deckEl.value;
+    flashcardState.flipped = false;
+    flashcardState.index = 0;
+    refreshFlashcardOrder({ shuffleDeck: true });
+    renderFlashcardsPage();
+  });
+
+  reviewDeckButton.addEventListener("click", () => {
+    flashcardState.deck = "review";
+    deckEl.value = "review";
     flashcardState.flipped = false;
     flashcardState.index = 0;
     refreshFlashcardOrder({ shuffleDeck: true });
