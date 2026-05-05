@@ -874,8 +874,101 @@
     text-transform: uppercase;
   }
   @media (max-width: 900px) {
+    .top-nav {
+      gap: 0.25rem;
+      padding: 0 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .top-nav::-webkit-scrollbar {
+      display: none;
+    }
+    .nav-brand {
+      margin-right: 0.75rem;
+      font-size: 1rem;
+      flex: 0 0 auto;
+    }
+    .nav-tab {
+      padding: 0 0.75rem;
+      flex: 0 0 auto;
+      line-height: 3.1rem;
+    }
+    .people-header,
+    .events-header,
+    .master-header {
+      padding: 1.2rem 1rem 1rem;
+    }
+    main,
+    .events-main,
+    .master-main,
+    .progress-main {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    .controls,
+    .events-controls,
+    .master-controls {
+      gap: 0.6rem;
+    }
+    #search,
+    #event-search,
+    #quizizz-mode,
+    #quizizz-era,
+    #flashcard-deck,
+    #master-search,
+    #master-era {
+      width: 100%;
+      min-width: 0;
+    }
+    #count,
+    #event-count,
+    #quizizz-score,
+    #master-count {
+      margin-left: 0;
+      width: 100%;
+    }
+    .type-filters,
+    .era-filters {
+      width: 100%;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .events-grid {
+      grid-template-columns: 1fr;
+    }
     .flashcard-layout {
       grid-template-columns: 1fr;
+    }
+    .flashcard-stage {
+      min-height: 0;
+    }
+    .flashcard-card {
+      padding: 1rem;
+    }
+    .flashcard-title {
+      font-size: clamp(1.45rem, 6vw, 2.3rem);
+    }
+    .flashcard-front {
+      min-height: 140px;
+    }
+    .flashcard-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .flashcard-button,
+    .quizizz-next,
+    .type-btn,
+    .era-btn {
+      min-height: 42px;
+    }
+    .quizizz-order-grid,
+    .quizizz-timeline-bank {
+      grid-template-columns: 1fr;
+    }
+    .quizizz-drop-slot {
+      min-height: 72px;
     }
     .master-scroll::before {
       left: 18px;
@@ -1084,5 +1177,62 @@
     }
     .progress-grid {
       grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    body {
+      font-size: 13px;
+    }
+    .utility-title {
+      font-size: 1rem;
+    }
+    .utility-subtitle,
+    .subtitle {
+      font-size: 9px;
+      line-height: 1.5;
+    }
+    .page-title,
+    .events-title,
+    .master-title {
+      font-size: 1.35rem;
+    }
+    .nav-tab {
+      font-size: 10px;
+      padding: 0 0.65rem;
+    }
+    .card,
+    .event-card,
+    .progress-panel,
+    .flashcard-panel,
+    .quizizz-card {
+      padding: 0.95rem;
+    }
+    .card-desc,
+    .event-desc,
+    .flashcard-detail-value,
+    .master-detail p {
+      font-size: 12px;
+    }
+    .master-main {
+      max-width: 100%;
+    }
+    .master-scroll {
+      max-height: none;
+      overflow-y: visible;
+      padding-bottom: 1rem;
+    }
+    .master-era-name {
+      font-size: 0.95rem;
+    }
+    .master-summary {
+      padding: 0.8rem 0.9rem;
+    }
+    .master-detail {
+      padding: 0.8rem 0.9rem 0.9rem;
+    }
+    .recent-attempt-top,
+    .period-progress-head {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
