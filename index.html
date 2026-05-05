@@ -34,6 +34,7 @@
       <div class="nav-brand">APUSH <span>Full Review</span></div>
       <div class="nav-tab active-people" id="tab-people" data-tab="people">PEOPLE</div>
       <div class="nav-tab" id="tab-events" data-tab="events">EVENTS</div>
+      <div class="nav-tab" id="tab-flashcards" data-tab="flashcards">FLASHCARDS</div>
       <div class="nav-tab" id="tab-quizizz" data-tab="quizizz">QUIZIZZ</div>
       <div class="nav-tab" id="tab-master-timeline" data-tab="master-timeline">TIMELINE</div>
       <div class="nav-tab" id="tab-progress" data-tab="progress">PROGRESS</div>
@@ -63,6 +64,37 @@
         </div>
       </div>
       <div class="events-main" id="events-main"></div>
+    </div>
+
+    <div class="page" id="page-flashcards">
+      <div class="master-header">
+        <div class="master-title">APUSH <span>Flashcards</span></div>
+        <div class="subtitle">// FLIP THROUGH PEOPLE, EVENTS, AND CUSTOM REVIEW DECKS</div>
+        <div class="master-controls">
+          <select id="flashcard-deck"></select>
+          <button class="type-btn" id="flashcard-shuffle" type="button">SHUFFLE</button>
+          <button class="type-btn" id="flashcard-flip" type="button">FLIP</button>
+          <button class="type-btn" id="flashcard-next" type="button">NEXT</button>
+          <span class="progress-summary-pill" id="flashcard-meta"></span>
+        </div>
+      </div>
+      <div class="progress-main">
+        <section class="flashcard-layout">
+          <article class="flashcard-panel flashcard-stage">
+            <div id="flashcard-stage"></div>
+          </article>
+          <aside class="flashcard-panel flashcard-sidebar">
+            <div class="flashcard-sidebar-block">
+              <h3>Deck Status</h3>
+              <div id="flashcard-deck-stats" class="flashcard-stats"></div>
+            </div>
+            <div class="flashcard-sidebar-block">
+              <h3>Saved Marks</h3>
+              <div id="flashcard-saved-stats" class="flashcard-stats"></div>
+            </div>
+          </aside>
+        </section>
+      </div>
     </div>
 
     <div class="page" id="page-quizizz">

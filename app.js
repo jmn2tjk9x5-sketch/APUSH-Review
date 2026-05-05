@@ -24,6 +24,7 @@ function switchTab(tab) {
   document.querySelectorAll('.nav-tab').forEach(t => t.className = 'nav-tab');
   document.getElementById('page-' + tab).classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active-' + tab);
+  if (tab === 'flashcards') renderFlashcardsPage();
   if (tab === 'progress') renderProgressPage();
 }
 
@@ -42,6 +43,19 @@ function slugify(text) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function loadLocalJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveLocalJson(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 function updateSyncStatus(user) {
@@ -363,6 +377,15 @@ const quizizzState = {
   total: 0,
   current: null
 };
+
+const flashcardStorageKey = "apush-flashcard-marks-v1";
+const flashcardState = {
+  deck: "all",
+  flipped: false,
+  order: [],
+  index: 0,
+  marks: loadLocalJson(flashcardStorageKey, {})
+};
 let draggedTimelineId = null;
 
 function yearValue(label) {
@@ -381,6 +404,226 @@ function shuffle(arr) {
 
 function pickMany(arr, n) {
   return shuffle(arr).slice(0, n);
+}
+
+function getFlashcardItems() {
+  return [
+    ...data.map(item => ({
+      key: `person:${slugify(item.name)}`,
+      type: "person",
+      name: item.name,
+      era: item.era,
+      yearLabel: item.dates,
+      desc: item.desc,
+      significance: "",
+      tags: item.tags || []
+    })),
+    ...eventsData.map(item => ({
+      key: `event:${slugify(item.name)}`,
+      type: "event",
+      name: item.name,
+      era: item.era,
+      yearLabel: item.year,
+      desc: item.desc,
+      significance: item.significance || "",
+      tags: item.types || []
+    }))
+  ];
+}
+
+function getFlashcardMarks(itemKey) {
+  return flashcardState.marks[itemKey] || { review: false, known: false };
+}
+
+function setFlashcardMarks(itemKey, patch) {
+  const nextMarks = {
+    ...getFlashcardMarks(itemKey),
+    ...patch
+  };
+  flashcardState.marks[itemKey] = nextMarks;
+  saveLocalJson(flashcardStorageKey, flashcardState.marks);
+}
+
+function getDeckDefinitions() {
+  return [
+    { value: "all", label: "EVERYTHING" },
+    { value: "people", label: "PEOPLE ONLY" },
+    { value: "events", label: "EVENTS ONLY" },
+    { value: "review", label: "MARKED FOR REVIEW" },
+    { value: "known", label: "MARKED KNOWN" },
+    { value: "unknown", label: "UNMARKED / STILL LEARNING" },
+    ...eraOrder.map(era => ({ value: `era:${era}`, label: era.toUpperCase() }))
+  ];
+}
+
+function filterFlashcardsByDeck(items, deckValue) {
+  if (deckValue === "all") return items;
+  if (deckValue === "people") return items.filter(item => item.type === "person");
+  if (deckValue === "events") return items.filter(item => item.type === "event");
+  if (deckValue === "review") return items.filter(item => getFlashcardMarks(item.key).review);
+  if (deckValue === "known") return items.filter(item => getFlashcardMarks(item.key).known);
+  if (deckValue === "unknown") {
+    return items.filter(item => {
+      const marks = getFlashcardMarks(item.key);
+      return !marks.review && !marks.known;
+    });
+  }
+  if (deckValue.startsWith("era:")) {
+    const era = deckValue.slice(4);
+    return items.filter(item => item.era === era);
+  }
+  return items;
+}
+
+function refreshFlashcardOrder({ shuffleDeck = false } = {}) {
+  const cards = filterFlashcardsByDeck(getFlashcardItems(), flashcardState.deck);
+  const sortedKeys = cards.map(item => item.key);
+  const existingSet = new Set(sortedKeys);
+  let nextOrder = flashcardState.order.filter(key => existingSet.has(key));
+
+  if (!nextOrder.length || shuffleDeck) {
+    nextOrder = shuffle(sortedKeys);
+    flashcardState.index = 0;
+  } else if (nextOrder.length !== sortedKeys.length) {
+    const missing = sortedKeys.filter(key => !nextOrder.includes(key));
+    nextOrder = nextOrder.concat(missing);
+  }
+
+  flashcardState.order = nextOrder;
+  if (flashcardState.index >= nextOrder.length) {
+    flashcardState.index = Math.max(0, nextOrder.length - 1);
+  }
+}
+
+function currentFlashcardItem() {
+  const itemsByKey = new Map(getFlashcardItems().map(item => [item.key, item]));
+  return itemsByKey.get(flashcardState.order[flashcardState.index]) || null;
+}
+
+function updateFlashcardMeta(deckSize) {
+  const metaEl = document.getElementById("flashcard-meta");
+  if (!metaEl) return;
+  if (!deckSize) {
+    metaEl.textContent = "0 cards in deck";
+    return;
+  }
+  metaEl.textContent = `${flashcardState.index + 1} / ${deckSize} · ${flashcardState.flipped ? "back" : "front"}`;
+}
+
+function renderFlashcardStats(deckItems) {
+  const deckStatsEl = document.getElementById("flashcard-deck-stats");
+  const savedStatsEl = document.getElementById("flashcard-saved-stats");
+  if (!deckStatsEl || !savedStatsEl) return;
+
+  const reviewCount = deckItems.filter(item => getFlashcardMarks(item.key).review).length;
+  const knownCount = deckItems.filter(item => getFlashcardMarks(item.key).known).length;
+  const peopleCount = deckItems.filter(item => item.type === "person").length;
+  const eventCount = deckItems.filter(item => item.type === "event").length;
+
+  deckStatsEl.innerHTML = `
+    <div class="flashcard-stat-row"><span>Cards in Deck</span><strong>${deckItems.length}</strong></div>
+    <div class="flashcard-stat-row"><span>People</span><strong>${peopleCount}</strong></div>
+    <div class="flashcard-stat-row"><span>Events</span><strong>${eventCount}</strong></div>
+  `;
+
+  savedStatsEl.innerHTML = `
+    <div class="flashcard-stat-row"><span>Marked Review</span><strong>${reviewCount}</strong></div>
+    <div class="flashcard-stat-row"><span>Marked Known</span><strong>${knownCount}</strong></div>
+    <div class="flashcard-stat-row"><span>Unmarked</span><strong>${Math.max(deckItems.length - reviewCount - knownCount, 0)}</strong></div>
+  `;
+}
+
+function renderFlashcardsPage() {
+  const stageEl = document.getElementById("flashcard-stage");
+  const deckEl = document.getElementById("flashcard-deck");
+  if (!stageEl || !deckEl) return;
+
+  const deckItems = filterFlashcardsByDeck(getFlashcardItems(), flashcardState.deck);
+  refreshFlashcardOrder();
+  updateFlashcardMeta(deckItems.length);
+  renderFlashcardStats(deckItems);
+
+  const item = currentFlashcardItem();
+  if (!item) {
+    stageEl.innerHTML = `<div class="flashcard-empty">// NO CARDS IN THIS DECK YET</div>`;
+    return;
+  }
+
+  const marks = getFlashcardMarks(item.key);
+  stageEl.innerHTML = `
+    <div class="flashcard-card">
+      <div class="flashcard-topline">
+        <span class="flashcard-type">${item.type} · ${item.era}</span>
+        <span class="flashcard-position">${flashcardState.index + 1} OF ${deckItems.length}</span>
+      </div>
+      ${flashcardState.flipped ? `
+        <div class="flashcard-back">
+          <div class="flashcard-title">${item.name}</div>
+          <div class="flashcard-detail-block">
+            <div class="flashcard-detail-label">When</div>
+            <div class="flashcard-detail-value">${item.yearLabel}</div>
+          </div>
+          <div class="flashcard-detail-block">
+            <div class="flashcard-detail-label">Why It Matters</div>
+            <div class="flashcard-detail-value">${item.desc}</div>
+          </div>
+          ${item.significance ? `
+            <div class="flashcard-detail-block">
+              <div class="flashcard-detail-label">Significance</div>
+              <div class="flashcard-detail-value">${item.significance}</div>
+            </div>
+          ` : ""}
+          <div class="flashcard-pill-row">
+            ${item.tags.map(tag => `<span class="flashcard-pill">${tag}</span>`).join("")}
+          </div>
+        </div>
+      ` : `
+        <div class="flashcard-front">
+          <div class="flashcard-title">${item.name}</div>
+        </div>
+      `}
+      <div class="flashcard-actions">
+        <button class="flashcard-button ${marks.review ? "review-active" : ""}" id="mark-review-button" type="button">Mark for Review</button>
+        <button class="flashcard-button ${marks.known ? "known-active" : ""}" id="mark-known-button" type="button">Mark Known</button>
+        <button class="flashcard-button" id="clear-marks-button" type="button">Clear Marks</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("mark-review-button").addEventListener("click", () => {
+    const nextReview = !getFlashcardMarks(item.key).review;
+    setFlashcardMarks(item.key, { review: nextReview, known: nextReview ? false : getFlashcardMarks(item.key).known });
+    recordStudyAttempt({
+      label: item.name,
+      era: item.era,
+      mode: "flashcards",
+      questionType: "mark-review",
+      correct: false,
+      metadata: { type: item.type, toggled_on: nextReview }
+    });
+    flashcardState.flipped = true;
+    renderFlashcardsPage();
+  });
+
+  document.getElementById("mark-known-button").addEventListener("click", () => {
+    const nextKnown = !getFlashcardMarks(item.key).known;
+    setFlashcardMarks(item.key, { known: nextKnown, review: nextKnown ? false : getFlashcardMarks(item.key).review });
+    recordStudyAttempt({
+      label: item.name,
+      era: item.era,
+      mode: "flashcards",
+      questionType: "mark-known",
+      correct: true,
+      metadata: { type: item.type, toggled_on: nextKnown }
+    });
+    flashcardState.flipped = true;
+    renderFlashcardsPage();
+  });
+
+  document.getElementById("clear-marks-button").addEventListener("click", () => {
+    setFlashcardMarks(item.key, { review: false, known: false });
+    renderFlashcardsPage();
+  });
 }
 
 function makeTimelineId(item) {
@@ -875,6 +1118,51 @@ function buildMasterTimelineApp() {
   renderMasterTimeline();
 }
 
+function buildFlashcardsApp() {
+  const deckEl = document.getElementById("flashcard-deck");
+  const flipButton = document.getElementById("flashcard-flip");
+  const nextButton = document.getElementById("flashcard-next");
+  const shuffleButton = document.getElementById("flashcard-shuffle");
+
+  getDeckDefinitions().forEach(deck => {
+    const option = document.createElement("option");
+    option.value = deck.value;
+    option.textContent = deck.label;
+    deckEl.appendChild(option);
+  });
+
+  deckEl.value = flashcardState.deck;
+
+  deckEl.addEventListener("change", () => {
+    flashcardState.deck = deckEl.value;
+    flashcardState.flipped = false;
+    flashcardState.index = 0;
+    refreshFlashcardOrder({ shuffleDeck: true });
+    renderFlashcardsPage();
+  });
+
+  flipButton.addEventListener("click", () => {
+    flashcardState.flipped = !flashcardState.flipped;
+    renderFlashcardsPage();
+  });
+
+  nextButton.addEventListener("click", () => {
+    if (!flashcardState.order.length) return;
+    flashcardState.index = (flashcardState.index + 1) % flashcardState.order.length;
+    flashcardState.flipped = false;
+    renderFlashcardsPage();
+  });
+
+  shuffleButton.addEventListener("click", () => {
+    flashcardState.flipped = false;
+    refreshFlashcardOrder({ shuffleDeck: true });
+    renderFlashcardsPage();
+  });
+
+  refreshFlashcardOrder({ shuffleDeck: true });
+  renderFlashcardsPage();
+}
+
 function buildQuizizzApp() {
   document.getElementById("quizizz-new").addEventListener("click", nextQuizizzQuestion);
   document.getElementById("quizizz-mode").addEventListener("change", nextQuizizzQuestion);
@@ -890,6 +1178,7 @@ async function init() {
   setupNav();
   buildPeopleApp();
   buildEventsApp();
+  buildFlashcardsApp();
   buildQuizizzApp();
   buildMasterTimelineApp();
   await setupAuthUi();
